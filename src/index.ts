@@ -1,4 +1,6 @@
+import * as RestApi from "./ports/rest.api";
+
 async function bootstrap() {
-    console.log('pouet');
+    RestApi.instance.start()
 }
 bootstrap();

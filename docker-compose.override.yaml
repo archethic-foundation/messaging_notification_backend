@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  node1:
+    build:
+      context: .
+      target: push_server_dev
+    volumes:
+      - ./:/srv/app

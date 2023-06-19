@@ -47,6 +47,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 
 COPY --from=push_server_builder --link /srv/app/dist ./dist
+COPY --from=push_server_builder --link /srv/app/node_modules ./node_modules
 
 USER nodejs
 
@@ -54,4 +55,4 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/index"]
