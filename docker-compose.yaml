@@ -25,8 +25,6 @@ services:
     image: redis:7
     volumes:
       - db:/data
-    ports:
-      - 6379:6379
   
   node1:
     build:
@@ -39,4 +37,31 @@ services:
     environment:
       REDIS_PORT: 6379
       REDIS_HOST: redis
+      ARCHETHIC_ENDPOINT: https://testnet.archethic.net
+    
+  node2:
+    build:
+      context: .
+      target: push_server_prod
+    ports:
+      - 8201:3000
+    depends_on:
+      - redis
+    environment:
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+      ARCHETHIC_ENDPOINT: https://testnet.archethic.net
+    
+  node3:
+    build:
+      context: .
+      target: push_server_prod
+    ports:
+      - 8202:3000
+    depends_on:
+      - redis
+    environment:
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+      ARCHETHIC_ENDPOINT: https://testnet.archethic.net
     

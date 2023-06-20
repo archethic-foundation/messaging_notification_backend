@@ -1,6 +1,8 @@
-import * as RestApi from "./ports/rest.api";
+import { Deps } from "./deps.js";
 
 async function bootstrap() {
-    RestApi.instance.start()
+    console.log(`Starting with configuration : ${JSON.stringify(Deps.instance.configuration)}`)
+
+    await Deps.instance.httpApi.start()
 }
 bootstrap();

@@ -46,6 +46,7 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
 
+COPY --from=push_server_builder --link /srv/app/package.json ./dist/
 COPY --from=push_server_builder --link /srv/app/dist ./dist
 COPY --from=push_server_builder --link /srv/app/node_modules ./node_modules
 
@@ -55,4 +56,4 @@ EXPOSE 3000
 
 ENV PORT 3000
 
-CMD ["node", "dist/index"]
+CMD ["node", "dist/index.js"]
