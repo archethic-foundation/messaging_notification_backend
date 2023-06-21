@@ -43,14 +43,20 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
 
         this._app.post(
             '/transactionSent',
-            (req: Request, res: Response) => {
-                console.log(req.body)
-                const txSentEvent = req.body as TxSentEvent
-                console.log(`Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
+            async (req: Request, res: Response) => {
+                try {
+                    console.log(req.body)
+                    const txSentEvent = req.body as TxSentEvent
+                    console.log(`Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
 
-                new TransactionSent().run(txSentEvent)
+                    await new TransactionSent().run(txSentEvent)
 
-                res.status(200).send()
+                    res.status(200).send()
+
+                } catch (e) {
+                    console.log('TransactionSent failed', e)
+                    res.status(500).send()
+                }
             }
         )
 
@@ -73,18 +79,25 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             console.log(socket);
 
             socket.on("subscribe", (data) => {
-                console.log(data)
-                const txChainSubscription = data as TxChainSubscription
-                socket.join(`txChain:${txChainSubscription.txChainGenesisAddress}`)
-                console.log(`${socket.id} subscribed to TxChain ${txChainSubscription.txChainGenesisAddress}`);
-
+                try {
+                    console.log(data)
+                    const txChainSubscription = data as TxChainSubscription
+                    socket.join(`txChain:${txChainSubscription.txChainGenesisAddress}`)
+                    console.log(`${socket.id} subscribed to TxChain ${txChainSubscription.txChainGenesisAddress}`);
+                } catch (e) {
+                    console.log('Subscription failed', e)
+                }
             });
 
             socket.on("unsubscribe", (data) => {
-                console.log(data)
-                const txChainSubscription = data as TxChainSubscription
-                socket.leave(`txChain:${txChainSubscription.txChainGenesisAddress}`)
-                console.log(`${socket.id} unsubscribed to TxChain ${txChainSubscription.txChainGenesisAddress}`);
+                try {
+                    console.log(data)
+                    const txChainSubscription = data as TxChainSubscription
+                    socket.leave(`txChain:${txChainSubscription.txChainGenesisAddress}`)
+                    console.log(`${socket.id} unsubscribed to TxChain ${txChainSubscription.txChainGenesisAddress}`);
+                } catch (e) {
+                    console.log('Unsubscription failed', e)
+                }
             });
 
             console.log("Set up done ");

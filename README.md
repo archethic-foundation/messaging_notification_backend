@@ -9,12 +9,18 @@
 ### on dev environment
 
 ```sh
-docker-compose up --build
+docker-compose up --build --scale push_server=3
 ```
+
+> This command will use `docker-compose.yaml` AND `docker-compose.override.yaml`
+
+> Replace `3` by the the number of `push_server` instances you want
 
 
 ### on production environment :
 
 ```sh
-docker-compose -f docker-compose.yaml up --build
+docker-compose -f docker-compose.yaml up --build --scale push_server=3
 ```
+
+> Replace `3` by the the number of `push_server` instances you want

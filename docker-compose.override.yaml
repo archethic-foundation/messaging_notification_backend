@@ -5,21 +5,12 @@ services:
     ports:
       - 6379:6379
 
-  node1:
+  push_server:
     build:
       context: .
       target: push_server_dev
     volumes:
       - ./:/srv/app
-  node2:
-    build:
-      context: .
-      target: push_server_dev
-    volumes:
-      - ./:/srv/app
-  node3:
-    build:
-      context: .
-      target: push_server_dev
-    volumes:
-      - ./:/srv/app
+    environment:
+      ARCHETHIC_ENDPOINT: http://192.168.1.20:4000
+  
