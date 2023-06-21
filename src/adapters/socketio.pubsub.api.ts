@@ -35,9 +35,6 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
     _setupExpress() {
         this._app = express()
 
-
-        this._setupSocketIo()
-
         this._app.use(express.json())
 
         this._app.get('/', (req: Request, res: Response) => {

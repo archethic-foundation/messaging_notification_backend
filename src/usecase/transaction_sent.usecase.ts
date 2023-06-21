@@ -1,8 +1,11 @@
+import { Crypto } from "archethic";
 import { Deps } from "../deps.js";
 import { TxSentEvent } from "../ports/pubsub.api.js";
 
 export class TransactionSent {
     _archethic = Deps.instance.archethicClient
+    _pubSubApi = Deps.instance.pubSubApi
+
     async run(event: TxSentEvent) {
         await this._archethic.connect()
 
@@ -10,7 +13,13 @@ export class TransactionSent {
 
         console.log(`prev pub key : ${previousPublicKey}`)
 
-        // TODO check event.payloadSignature against previousPublicKey
+        const isValid = Crypto.verify(
+            event.payloadSignature,
+            `${event.txAddress}${event.txChainGenesisAddress}`,
+            previousPublicKey,
+        );
+        console.log(`Is signature valid for ${event.txAddress}${event.txChainGenesisAddress} : ${isValid}`)
+        this._pubSubApi.emitTxSentEvent(event)
     }
 
     async _getPreviousPublicKey(txAddress: string): Promise<string> {
