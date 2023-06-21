@@ -1,35 +1,39 @@
 import { Crypto } from "archethic";
 import { Deps } from "../deps.js";
+import { Transaction } from "../ports/blockchain.repository.js";
 import { TxSentEvent } from "../ports/pubsub.api.js";
 
 export class TransactionSent {
-    _archethic = Deps.instance.archethicClient
     _pubSubApi = Deps.instance.pubSubApi
+    _blockchainRepository = Deps.instance.blockchainRepository
+
+    static _maxNotificationDelay = 5000;
 
     async run(event: TxSentEvent) {
-        await this._archethic.connect()
+        const transaction = await this._blockchainRepository.getTransaction(event.txAddress);
+        if (!this._isNotificationDelayValid(transaction)) {
+            console.log(`Notification rejected : too much time elapsed since Transaction creation`)
+            return
+        }
 
-        const previousPublicKey = await this._getPreviousPublicKey(event.txAddress)
-
-        console.log(`prev pub key : ${previousPublicKey}`)
-
-        const isValid = Crypto.verify(
-            event.payloadSignature,
-            `${event.txAddress}${event.txChainGenesisAddress}`,
-            previousPublicKey,
-        );
-        console.log(`Is signature valid for ${event.txAddress}${event.txChainGenesisAddress} : ${isValid}`)
+        if (!this._isEventSignatureValid(transaction, event)) {
+            console.log(`Notification rejected : Invalid event signature.`)
+            return
+        }
         this._pubSubApi.emitTxSentEvent(event)
     }
 
-    async _getPreviousPublicKey(txAddress: string): Promise<string> {
-        const query = `
-        query {
-          transaction(address:\"${txAddress}\") { previousPublicKey }
-        }
-        `;
-
-        const response = await this._archethic.network.rawGraphQLQuery(query);
-        return response.transaction.previousPublicKey
+    _isNotificationDelayValid(transaction: Transaction): boolean {
+        return Date.now() - transaction.creationDate.getTime() < TransactionSent._maxNotificationDelay
     }
+
+    _isEventSignatureValid(transaction: Transaction, event: TxSentEvent): boolean {
+        return Crypto.verify(
+            event.payloadSignature,
+            `${event.txAddress}${event.txChainGenesisAddress}`,
+            transaction.previousPublicKey,
+        );
+
+    }
+
 }
