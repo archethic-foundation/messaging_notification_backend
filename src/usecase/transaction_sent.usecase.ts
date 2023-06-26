@@ -20,7 +20,7 @@ export class TransactionSent {
             console.log(`Notification rejected : Invalid event signature.`)
             return
         }
-        this._pubSubApi.emitTxSentEvent(event)
+        await this._pubSubApi.emitTxSentEvent(event)
     }
 
     _isNotificationDelayValid(transaction: Transaction): boolean {

@@ -64,6 +64,10 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
         this._httpServer = http.createServer(this._app);
     }
 
+    _txChainChannel(txChainAddress: string): string {
+        return `txChain:${txChainAddress.toLowerCase()}`
+    }
+
     _setupSocketIo() {
         this._pubClient = createClient({ url: RedisConfUtils.url(this._redisConf) });
         this._subClient = this._pubClient.duplicate();
@@ -80,10 +84,12 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
 
             socket.on("subscribe", (data) => {
                 try {
-                    console.log(data)
                     const txChainSubscription = data as TxChainSubscription
-                    socket.join(`txChain:${txChainSubscription.txChainGenesisAddress}`)
-                    console.log(`${socket.id} subscribed to TxChain ${txChainSubscription.txChainGenesisAddress}`);
+                    const channels = txChainSubscription.txChainGenesisAddresses.map(
+                        txChainGenesisAddress => this._txChainChannel(txChainGenesisAddress),
+                    )
+                    socket.join(channels)
+                    console.log(`${socket.id} subscribed to TxChains ${txChainSubscription.txChainGenesisAddresses}\n\tChannels joined : ${channels}`);
                 } catch (e) {
                     console.log('Subscription failed', e)
                 }
@@ -93,8 +99,13 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                 try {
                     console.log(data)
                     const txChainSubscription = data as TxChainSubscription
-                    socket.leave(`txChain:${txChainSubscription.txChainGenesisAddress}`)
-                    console.log(`${socket.id} unsubscribed to TxChain ${txChainSubscription.txChainGenesisAddress}`);
+                    const channels = txChainSubscription.txChainGenesisAddresses.map(
+                        txChainGenesisAddress => this._txChainChannel(txChainGenesisAddress),
+                    )
+                    for (const channel of channels) {
+                        socket.leave(channel)
+                    }
+                    console.log(`${socket.id} unsubscribed to TxChains ${txChainSubscription.txChainGenesisAddresses}\n\tChannels left : ${channels}`);
                 } catch (e) {
                     console.log('Unsubscription failed', e)
                 }
@@ -113,8 +124,10 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
         });
     }
 
-    emitTxSentEvent(txSentEvent: TxSentEvent) {
-        this._socketIo.to(`txChain:${txSentEvent.txChainGenesisAddress}`).emit(PubSubEvent.txSent, txSentEvent)
+    async emitTxSentEvent(txSentEvent: TxSentEvent) {
+        console.log(`Emit TxSent event : ${txSentEvent}`)
+        this._socketIo.to(this._txChainChannel(txSentEvent.txChainGenesisAddress)).emit(PubSubEvent.txSent, txSentEvent)
+        console.log(`Did Emit TxSent event : ${txSentEvent}`)
     }
 }
 

@@ -6,11 +6,11 @@ export type TxSentEvent = {
 }
 
 export type TxChainSubscription = {
-    txChainGenesisAddress: string
+    txChainGenesisAddresses: Array<string>
 }
 
 export interface PubSubApi {
     start(): Promise<void>
 
-    emitTxSentEvent(txSentEvent: TxSentEvent);
+    emitTxSentEvent(txSentEvent: TxSentEvent): Promise<void>;
 }
