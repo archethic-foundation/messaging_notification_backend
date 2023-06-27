@@ -22,6 +22,7 @@ export class TransactionSent {
             return
         }
         await this._pubSubApi.emitTxSentEvent(event)
+        await this._pushNotifsRepository.emitTxSentEvent(event)
 
 
         const subscribedPushTokens = await this._pushNotifsRepository.getSubscribedTokens(event.txChainGenesisAddress)

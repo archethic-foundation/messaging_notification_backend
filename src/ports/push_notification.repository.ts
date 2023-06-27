@@ -1,3 +1,4 @@
+import { TxSentEvent } from "./pubsub.api.js";
 
 export interface PushNotificationRepository {
     init(): Promise<void>;
@@ -17,4 +18,6 @@ export interface PushNotificationRepository {
     getSubscribedTokens(
         txChainAddress: string,
     ): Promise<Array<string>>;
+
+    emitTxSentEvent(txSentEvent: TxSentEvent): Promise<void>;
 }

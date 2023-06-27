@@ -11,6 +11,8 @@ services:
       target: push_server_dev
     volumes:
       - ./:/srv/app
+      - ./ae-wallet-d03aabf1d2a2.json:/srv/firebase_credentials.json
     environment:
       ARCHETHIC_ENDPOINT: http://192.168.1.20:4000
+      GOOGLE_APPLICATION_CREDENTIALS: /srv/firebase_credentials.json
   
