@@ -1,10 +1,11 @@
 import { createAdapter } from "@socket.io/redis-adapter";
 import express, { Request, Response } from 'express';
 import * as http from "http";
+import { PushNotificationRepository } from "ports/push_notification.repository.js";
 import { createClient } from "redis";
 import * as socketio from "socket.io";
 import { RedisConf, RedisConfUtils } from '../configuration.js';
-import { HttpApi } from "../ports/http.api.js";
+import { HttpApi, TxChainPushSubscription, TxChainPushUnsubscription } from "../ports/http.api.js";
 import { PubSubApi, TxChainSubscription, TxSentEvent } from "../ports/pubsub.api.js";
 import { TransactionSent } from "../usecase/transaction_sent.usecase.js";
 
@@ -12,7 +13,6 @@ import { TransactionSent } from "../usecase/transaction_sent.usecase.js";
 export enum PubSubEvent {
     txSent = "TxSent"
 }
-
 
 export class SocketIoPubSubApi implements PubSubApi, HttpApi {
     _port: number
@@ -22,11 +22,17 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
     _pubClient;
     _subClient;
     _httpServer: http.Server
+    _pushNotificationRepository: PushNotificationRepository
 
-    constructor(port: number, redisConf: RedisConf) {
+    constructor(
+        port: number,
+        redisConf: RedisConf,
+        pushNotificationRepository: PushNotificationRepository,
+    ) {
         this._port = port
         this._redisConf = redisConf
         this._app = express()
+        this._pushNotificationRepository = pushNotificationRepository
 
         this._setupExpress()
         this._setupSocketIo()
@@ -60,6 +66,50 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             }
         )
 
+        this._app.post(
+            '/subscribe',
+            async (req: Request, res: Response) => {
+                try {
+                    console.log(req.body)
+                    const subscribeCommand = req.body as TxChainPushSubscription
+                    console.log(`Subscription command received for chain ${subscribeCommand.txChainGenesisAddresses} with push token ${subscribeCommand.pushToken}.`)
+
+                    for (const txChainGenesisAddress of subscribeCommand.txChainGenesisAddresses) {
+                        await this._pushNotificationRepository.subscribeToken(
+                            txChainGenesisAddress,
+                            subscribeCommand.pushToken,
+                        )
+                    }
+                    res.status(200).send()
+                } catch (e) {
+                    console.log('Subscription to push notifs failed', e)
+                    res.status(500).send()
+                }
+            }
+        )
+
+        this._app.post(
+            '/unsubscribe',
+            async (req: Request, res: Response) => {
+                try {
+                    console.log(req.body)
+                    const unsubscribeCommand = req.body as TxChainPushUnsubscription
+                    console.log(`Unsubscription command received for chain ${unsubscribeCommand.txChainGenesisAddresses} with push token ${unsubscribeCommand.pushToken}.`)
+
+                    for (const txChainGenesisAddress of unsubscribeCommand.txChainGenesisAddresses) {
+                        await this._pushNotificationRepository.unsubscribeToken(
+                            txChainGenesisAddress,
+                            unsubscribeCommand.pushToken,
+                        )
+                    }
+
+                    res.status(200).send()
+                } catch (e) {
+                    console.log('Unsubscription to push notifs failed', e)
+                    res.status(500).send()
+                }
+            }
+        )
 
         this._httpServer = http.createServer(this._app);
     }

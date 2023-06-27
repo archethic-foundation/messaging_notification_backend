@@ -1,7 +1,7 @@
 import Archethic from "archethic";
 import { BlockchainRepository, Transaction } from "../ports/blockchain.repository.js";
 
-export class LibdartBlockchainRepository implements BlockchainRepository {
+export class LibjsBlockchainRepository implements BlockchainRepository {
   _archethic: Archethic
 
   constructor(archethic: Archethic) {

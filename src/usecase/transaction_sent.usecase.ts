@@ -6,6 +6,7 @@ import { TxSentEvent } from "../ports/pubsub.api.js";
 export class TransactionSent {
     _pubSubApi = Deps.instance.pubSubApi
     _blockchainRepository = Deps.instance.blockchainRepository
+    _pushNotifsRepository = Deps.instance.pushNotifsRepository
 
     static _maxNotificationDelay = 5000;
 
@@ -21,6 +22,10 @@ export class TransactionSent {
             return
         }
         await this._pubSubApi.emitTxSentEvent(event)
+
+
+        const subscribedPushTokens = await this._pushNotifsRepository.getSubscribedTokens(event.txChainGenesisAddress)
+
     }
 
     _isNotificationDelayValid(transaction: Transaction): boolean {

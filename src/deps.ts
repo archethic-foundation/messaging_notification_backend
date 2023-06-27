@@ -1,10 +1,12 @@
 import Archethic from "archethic";
-import { LibdartBlockchainRepository } from "./adapters/libdart.blockchain.repository.js";
+import { LibjsBlockchainRepository } from "./adapters/libjs.blockchain.repository.js";
+import { RedisPushNotificationRepository } from "./adapters/push_notification.repository.js";
 import { SocketIoPubSubApi } from "./adapters/socketio.pubsub.api.js";
 import * as conf from "./configuration.js";
 import { BlockchainRepository } from "./ports/blockchain.repository.js";
 import { HttpApi } from "./ports/http.api.js";
 import { PubSubApi } from "./ports/pubsub.api.js";
+import { PushNotificationRepository } from "./ports/push_notification.repository.js";
 
 export class Deps {
     static _instance: Deps
@@ -17,16 +19,21 @@ export class Deps {
     httpApi: HttpApi
     pubSubApi: PubSubApi
     blockchainRepository: BlockchainRepository
+    pushNotifsRepository: PushNotificationRepository
 
     constructor() {
         this.configuration = conf.configuration()
+        this.pushNotifsRepository = new RedisPushNotificationRepository(
+            this.configuration.redis
+        )
         this.pubSubApi = new SocketIoPubSubApi(
             this.configuration.port,
             this.configuration.redis,
+            this.pushNotifsRepository,
         )
         this.httpApi = this.pubSubApi
-        this.blockchainRepository = new LibdartBlockchainRepository(
-            new Archethic(this.configuration.archethic.endpoint)
+        this.blockchainRepository = new LibjsBlockchainRepository(
+            new Archethic(this.configuration.archethic.endpoint),
         )
     }
 }
