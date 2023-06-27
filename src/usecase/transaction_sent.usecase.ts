@@ -7,8 +7,8 @@ export class TransactionSent {
     _pubSubApi = Deps.instance.pubSubApi
     _blockchainRepository = Deps.instance.blockchainRepository
     _pushNotifsRepository = Deps.instance.pushNotifsRepository
+    _transactionMaxAge = Deps.instance.configuration.transactionMaxAge
 
-    static _maxNotificationDelay = 5000;
 
     async run(event: TxSentEvent) {
         const transaction = await this._blockchainRepository.getTransaction(event.txAddress);
@@ -23,14 +23,10 @@ export class TransactionSent {
         }
         await this._pubSubApi.emitTxSentEvent(event)
         await this._pushNotifsRepository.emitTxSentEvent(event)
-
-
-        const subscribedPushTokens = await this._pushNotifsRepository.getSubscribedTokens(event.txChainGenesisAddress)
-
     }
 
     _isNotificationDelayValid(transaction: Transaction): boolean {
-        return Date.now() - transaction.creationDate.getTime() < TransactionSent._maxNotificationDelay
+        return Date.now() - transaction.creationDate.getTime() < this._transactionMaxAge
     }
 
     _isEventSignatureValid(transaction: Transaction, event: TxSentEvent): boolean {

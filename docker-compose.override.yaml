@@ -13,6 +13,7 @@ services:
       - ./:/srv/app
       - ./ae-wallet-d03aabf1d2a2.json:/srv/firebase_credentials.json
     environment:
-      ARCHETHIC_ENDPOINT: http://192.168.1.20:4000
+      # ARCHETHIC_ENDPOINT: http://192.168.1.20:4000
+      ARCHETHIC_ENDPOINT: https://testnet.archethic.net
       GOOGLE_APPLICATION_CREDENTIALS: /srv/firebase_credentials.json
   

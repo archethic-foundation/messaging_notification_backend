@@ -20,11 +20,13 @@ export type Configuration = {
     port: number
     redis: RedisConf
     archethic: ArchethicConf
+    transactionMaxAge: number //expressed in milliseconds
 }
 
 export const configuration = (): Configuration => ({
     instanceName: process.env.INSTANCE_NAME ?? uniqueNamesGenerator({ dictionaries: [adjectives, animals], length: 2, }),
     port: parseNumber(process.env.PORT) ?? 3000,
+    transactionMaxAge: 15000,
     redis: {
         port: Number(process.env.REDIS_PORT),
         host: process.env.REDIS_HOST,
