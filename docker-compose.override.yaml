@@ -9,6 +9,8 @@ services:
     build:
       context: .
       target: push_server_dev
+    ports:
+      - 9229:9229
     volumes:
       - ./:/srv/app
       - ./ae-wallet-d03aabf1d2a2.json:/srv/firebase_credentials.json

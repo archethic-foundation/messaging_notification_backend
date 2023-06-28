@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "start_dev": "npx tsc --watch & nodemon -q -w dist dist/index",
+    "start_dev": "npx tsc --watch & nodemon  --inspect=0.0.0.0 -q -w dist dist/index",
     "clean": "rm -R dist"
   },
   "author": "",

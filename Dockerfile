@@ -24,6 +24,7 @@ RUN npm install
 FROM push_server_deps as push_server_dev
 
 EXPOSE 3000
+EXPOSE 9229
 ENV PORT 3000
 
 CMD ["sh", "-c", "npm install; npm run build; npm run start_dev"]
