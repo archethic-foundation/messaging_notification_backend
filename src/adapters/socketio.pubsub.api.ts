@@ -5,8 +5,8 @@ import { PushNotificationRepository } from "ports/push_notification.repository.j
 import { createClient } from "redis";
 import * as socketio from "socket.io";
 import { RedisConf, RedisConfUtils } from '../configuration.js';
-import { HttpApi, TxChainPushSubscription, TxChainPushUnsubscription } from "../ports/http.api.js";
-import { PubSubApi, TxChainSubscription, TxSentEvent } from "../ports/pubsub.api.js";
+import { HttpApi, PushNotificationSettings, TxChainPushSubscription, TxChainPushUnsubscription } from "../ports/http.api.js";
+import { PubSubApi, TxChainWebsocketSubscription, TxSentEvent } from "../ports/pubsub.api.js";
 import { TransactionSent } from "../usecase/transaction_sent.usecase.js";
 
 
@@ -51,8 +51,13 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             '/transactionSent',
             async (req: Request, res: Response) => {
                 try {
-                    console.log(req.body)
-                    const txSentEvent = req.body as TxSentEvent
+                    const txSentEvent: TxSentEvent = {
+                        txChainGenesisAddress: req.body.txChainGenesisAddress,
+                        txAddress: req.body.txAddress,
+                        payloadSignature: req.body.payloadSignature,
+                        pushNotification: new Map(Object.entries(req.body.pushNotification))
+                    }
+
                     console.log(`Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
 
                     await new TransactionSent().run(txSentEvent)
@@ -66,8 +71,23 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             }
         )
 
+        this._app.put(
+            '/pushSettings',
+            async (req: Request, res: Response) => {
+                try {
+                    const pushSettings = req.body as PushNotificationSettings
+                    console.log(`Updating push notifications settings : ${JSON.stringify(pushSettings)}`)
+
+                    await this._pushNotificationRepository.updateSettings(pushSettings)
+                } catch (e) {
+                    console.log('Push notifications settings update failed', e)
+                    res.status(500).send()
+                }
+            }
+        )
+
         this._app.post(
-            '/subscribe',
+            '/subscribePush',
             async (req: Request, res: Response) => {
                 try {
                     console.log(req.body)
@@ -89,7 +109,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
         )
 
         this._app.post(
-            '/unsubscribe',
+            '/unsubscribePush',
             async (req: Request, res: Response) => {
                 try {
                     console.log(req.body)
@@ -134,7 +154,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
 
             socket.on("subscribe", (data) => {
                 try {
-                    const txChainSubscription = data as TxChainSubscription
+                    const txChainSubscription = data as TxChainWebsocketSubscription
                     const channels = txChainSubscription.txChainGenesisAddresses.map(
                         txChainGenesisAddress => this._txChainChannel(txChainGenesisAddress),
                     )
@@ -148,7 +168,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             socket.on("unsubscribe", (data) => {
                 try {
                     console.log(data)
-                    const txChainSubscription = data as TxChainSubscription
+                    const txChainSubscription = data as TxChainWebsocketSubscription
                     const channels = txChainSubscription.txChainGenesisAddresses.map(
                         txChainGenesisAddress => this._txChainChannel(txChainGenesisAddress),
                     )

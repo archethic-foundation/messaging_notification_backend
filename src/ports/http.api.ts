@@ -1,3 +1,8 @@
+export type PushNotificationSettings = {
+    pushToken: string,
+    locale: string,
+}
+
 export type TxChainPushSubscription = {
     pushToken: string,
     txChainGenesisAddresses: Array<string>
