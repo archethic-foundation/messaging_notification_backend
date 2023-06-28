@@ -58,6 +58,7 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
         txSentEvent: TxSentEvent,
     ): Promise<void> {
         const subscribedTokens = await this.getSubscribedTokens(txSentEvent.txChainGenesisAddress);
+        if (subscribedTokens.length == 0) return;
         console.log(`Members to notify : ${subscribedTokens}`)
         const sendResult = await getMessaging().sendEachForMulticast({
             notification: {
@@ -66,7 +67,16 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
             tokens: subscribedTokens,
         })
 
-        console.log(`${sendResult.successCount} notification successfully sent`)
+        for (let index = 0; index < sendResult.responses.length; index++) {
+            const response = sendResult.responses[index];
+            if (response.error != null) {
+                const token = subscribedTokens[index];
+                console.log(`Removing invalid Push token : ${token}`)
+                await this.unsubscribeToken(txSentEvent.txChainGenesisAddress, token)
+            }
+        }
+
+        console.log(`${sendResult.successCount} push notifications successfully sent`)
 
     }
 }

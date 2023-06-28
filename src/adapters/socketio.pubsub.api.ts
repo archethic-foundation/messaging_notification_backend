@@ -175,9 +175,8 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
     }
 
     async emitTxSentEvent(txSentEvent: TxSentEvent) {
-        console.log(`Emit TxSent event : ${txSentEvent}`)
+        console.log(`Emit TxSent event : ${txSentEvent.txAddress}`)
         this._socketIo.to(this._txChainChannel(txSentEvent.txChainGenesisAddress)).emit(PubSubEvent.txSent, txSentEvent)
-        console.log(`Did Emit TxSent event : ${txSentEvent}`)
     }
 }
 
