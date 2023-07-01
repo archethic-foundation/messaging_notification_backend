@@ -4,5 +4,5 @@ export type Transaction = {
 }
 
 export interface BlockchainRepository {
-    getTransaction(txAddress: string): Promise<Transaction>;
+    getTransaction(txAddress: string): Promise<Transaction | null>;
 }

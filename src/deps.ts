@@ -1,7 +1,7 @@
 import Archethic from "archethic";
+import { SocketIoPubSubApi } from "./adapters/express_socketio.api.js";
 import { LibjsBlockchainRepository } from "./adapters/libjs.blockchain.repository.js";
 import { RedisPushNotificationRepository } from "./adapters/push_notification.repository.js";
-import { SocketIoPubSubApi } from "./adapters/socketio.pubsub.api.js";
 import * as conf from "./configuration.js";
 import { BlockchainRepository } from "./ports/blockchain.repository.js";
 import { HttpApi } from "./ports/http.api.js";

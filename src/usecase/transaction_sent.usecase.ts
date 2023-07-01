@@ -3,6 +3,10 @@ import { Deps } from "../deps.js";
 import { Transaction } from "../ports/blockchain.repository.js";
 import { TxSentEvent } from "../ports/pubsub.api.js";
 
+export class UnknownTransactionError extends Error { }
+export class InvalidNotificationDelayError extends Error { }
+export class InvalidNotificationSignatureError extends Error { }
+
 export class TransactionSent {
     _pubSubApi = Deps.instance.pubSubApi
     _blockchainRepository = Deps.instance.blockchainRepository
@@ -12,14 +16,19 @@ export class TransactionSent {
 
     async run(event: TxSentEvent) {
         const transaction = await this._blockchainRepository.getTransaction(event.txAddress);
+        if (transaction === null) {
+            console.log(`Notification rejected : unknown transaction`)
+            throw new UnknownTransactionError();
+        }
+
         if (!this._isNotificationDelayValid(transaction)) {
             console.log(`Notification rejected : too much time elapsed since Transaction creation`)
-            return
+            throw new InvalidNotificationDelayError();
         }
 
         if (!this._isEventSignatureValid(transaction, event)) {
             console.log(`Notification rejected : Invalid event signature.`)
-            return
+            throw new InvalidNotificationSignatureError();
         }
         await this._pubSubApi.emitTxSentEvent(event)
         await this._pushNotifsRepository.emitTxSentEvent(event)

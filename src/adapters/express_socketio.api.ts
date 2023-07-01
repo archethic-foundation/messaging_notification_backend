@@ -7,7 +7,7 @@ import * as socketio from "socket.io";
 import { RedisConf, RedisConfUtils } from '../configuration.js';
 import { HttpApi, PushNotificationSettings, TxChainPushSubscription, TxChainPushUnsubscription } from "../ports/http.api.js";
 import { PubSubApi, TxChainWebsocketSubscription, TxSentEvent } from "../ports/pubsub.api.js";
-import { TransactionSent } from "../usecase/transaction_sent.usecase.js";
+import { InvalidNotificationDelayError, TransactionSent, UnknownTransactionError } from "../usecase/transaction_sent.usecase.js";
 
 
 export enum PubSubEvent {
@@ -66,6 +66,22 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
 
                 } catch (e) {
                     console.log('TransactionSent failed', e)
+                    if (e instanceof UnknownTransactionError) {
+                        res.status(404).send({
+                            "error": "Unknown transaction."
+                        })
+                        return
+                    } else if (e instanceof InvalidNotificationDelayError) {
+                        res.status(400).send({
+                            "error": "Notification delay expired."
+                        })
+                        return
+                    } else if (e instanceof TypeError) {
+                        res.status(400).send({
+                            "error": "Invalid body format."
+                        })
+                        return
+                    }
                     res.status(500).send()
                 }
             }
@@ -81,6 +97,13 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                     await this._pushNotificationRepository.updateSettings(pushSettings)
                 } catch (e) {
                     console.log('Push notifications settings update failed', e)
+                    if (e instanceof TypeError) {
+                        res.status(400).send({
+                            "error": "Invalid body format."
+                        })
+                        return
+                    }
+
                     res.status(500).send()
                 }
             }
@@ -103,6 +126,13 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                     res.status(200).send()
                 } catch (e) {
                     console.log('Subscription to push notifs failed', e)
+                    if (e instanceof TypeError) {
+                        res.status(400).send({
+                            "error": "Invalid body format."
+                        })
+                        return
+                    }
+
                     res.status(500).send()
                 }
             }
@@ -126,6 +156,12 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                     res.status(200).send()
                 } catch (e) {
                     console.log('Unsubscription to push notifs failed', e)
+                    if (e instanceof TypeError) {
+                        res.status(400).send({
+                            "error": "Invalid body format."
+                        })
+                        return
+                    }
                     res.status(500).send()
                 }
             }
