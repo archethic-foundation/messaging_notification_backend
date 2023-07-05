@@ -25,4 +25,11 @@ export interface PushNotificationRepository {
     ): Promise<Array<string>>;
 
     emitTxSentEvent(txSentEvent: TxSentEvent): Promise<void>;
+
+    sentNotificationExists(txAddress: string): Promise<boolean>;
+
+    registerSentNotification(
+        event: TxSentEvent,
+        expirationDate: Date,
+    ): Promise<void>;
 }

@@ -182,4 +182,20 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
 
         return groupedTokens
     }
+
+
+
+    private _sentNotificationKey(txAddress: string) {
+        return `sent_${txAddress}`
+    }
+
+    async sentNotificationExists(txAddress: string): Promise<boolean> {
+        const isSent = await this._client.GET(this._sentNotificationKey(txAddress))
+        return isSent === '1';
+    }
+
+    async registerSentNotification(event: TxSentEvent, expirationDate: Date): Promise<void> {
+        await this._client.SET(this._sentNotificationKey(event.txAddress), '1')
+        await this._client.EXPIREAT(this._sentNotificationKey(event.txAddress), expirationDate)
+    }
 }

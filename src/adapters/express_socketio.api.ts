@@ -7,7 +7,7 @@ import * as socketio from "socket.io";
 import { RedisConf, RedisConfUtils } from '../configuration.js';
 import { HttpApi, PushNotificationSettings, TxChainPushSubscription, TxChainPushUnsubscription } from "../ports/http.api.js";
 import { PubSubApi, TxChainWebsocketSubscription, TxSentEvent } from "../ports/pubsub.api.js";
-import { InvalidNotificationDelayError, TransactionSent, UnknownTransactionError } from "../usecase/transaction_sent.usecase.js";
+import { AlreadySentNotificationError, InvalidNotificationDelayError, InvalidNotificationSignatureError, TransactionSent, UnknownTransactionError } from "../usecase/transaction_sent.usecase.js";
 
 
 export enum PubSubEvent {
@@ -74,6 +74,16 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                     } else if (e instanceof InvalidNotificationDelayError) {
                         res.status(400).send({
                             "error": "Notification delay expired."
+                        })
+                        return
+                    } else if (e instanceof InvalidNotificationSignatureError) {
+                        res.status(400).send({
+                            "error": "Invalid payload signature."
+                        })
+                        return
+                    } else if (e instanceof AlreadySentNotificationError) {
+                        res.status(400).send({
+                            "error": "Notification already sent for that transaction."
                         })
                         return
                     } else if (e instanceof TypeError) {
