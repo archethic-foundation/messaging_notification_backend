@@ -58,7 +58,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                         pushNotification: new Map(Object.entries(req.body.pushNotification))
                     }
 
-                    console.log(`Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
+                    console.log(`⚡️ Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
 
                     await new TransactionSent().run(txSentEvent)
 
@@ -92,11 +92,11 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             async (req: Request, res: Response) => {
                 try {
                     const pushSettings = req.body as PushNotificationSettings
-                    console.log(`Updating push notifications settings : ${JSON.stringify(pushSettings)}`)
+                    console.log(`[PUSH] Updating push notifications settings : ${JSON.stringify(pushSettings)}`)
 
                     await this._pushNotificationRepository.updateSettings(pushSettings)
                 } catch (e) {
-                    console.log('Push notifications settings update failed', e)
+                    console.log('[PUSH] Push notifications settings update failed', e)
                     if (e instanceof TypeError) {
                         res.status(400).send({
                             "error": "Invalid body format."
@@ -113,9 +113,8 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             '/subscribePush',
             async (req: Request, res: Response) => {
                 try {
-                    console.log(req.body)
                     const subscribeCommand = req.body as TxChainPushSubscription
-                    console.log(`Subscription command received for chain ${subscribeCommand.txChainGenesisAddresses} with push token ${subscribeCommand.pushToken}.`)
+                    console.log(`[PUSH] Subscription command received for chain ${subscribeCommand.txChainGenesisAddresses} with push token ${subscribeCommand.pushToken}.`)
 
                     for (const txChainGenesisAddress of subscribeCommand.txChainGenesisAddresses) {
                         await this._pushNotificationRepository.subscribeToken(
@@ -125,7 +124,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                     }
                     res.status(200).send()
                 } catch (e) {
-                    console.log('Subscription to push notifs failed', e)
+                    console.log('[PUSH] Subscription to push notifs failed', e)
                     if (e instanceof TypeError) {
                         res.status(400).send({
                             "error": "Invalid body format."
@@ -142,9 +141,8 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             '/unsubscribePush',
             async (req: Request, res: Response) => {
                 try {
-                    console.log(req.body)
                     const unsubscribeCommand = req.body as TxChainPushUnsubscription
-                    console.log(`Unsubscription command received for chain ${unsubscribeCommand.txChainGenesisAddresses} with push token ${unsubscribeCommand.pushToken}.`)
+                    console.log(`[PUSH] Unsubscription command received for chain ${unsubscribeCommand.txChainGenesisAddresses} with push token ${unsubscribeCommand.pushToken}.`)
 
                     for (const txChainGenesisAddress of unsubscribeCommand.txChainGenesisAddresses) {
                         await this._pushNotificationRepository.unsubscribeToken(
@@ -155,7 +153,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
 
                     res.status(200).send()
                 } catch (e) {
-                    console.log('Unsubscription to push notifs failed', e)
+                    console.log('[PUSH] Unsubscription to push notifs failed', e)
                     if (e instanceof TypeError) {
                         res.status(400).send({
                             "error": "Invalid body format."
@@ -186,8 +184,6 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
             }
         );
         this._socketIo.on("connection", async (socket) => {
-            console.log(socket);
-
             socket.on("subscribe", (data) => {
                 try {
                     const txChainSubscription = data as TxChainWebsocketSubscription
@@ -195,15 +191,14 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                         txChainGenesisAddress => this._txChainChannel(txChainGenesisAddress),
                     )
                     socket.join(channels)
-                    console.log(`${socket.id} subscribed to TxChains ${txChainSubscription.txChainGenesisAddresses}\n\tChannels joined : ${channels}`);
+                    console.log(`[Websocket] ${socket.id} subscribed to TxChains ${txChainSubscription.txChainGenesisAddresses}`);
                 } catch (e) {
-                    console.log('Subscription failed', e)
+                    console.log('[Websocket] Subscription failed', e)
                 }
             });
 
             socket.on("unsubscribe", (data) => {
                 try {
-                    console.log(data)
                     const txChainSubscription = data as TxChainWebsocketSubscription
                     const channels = txChainSubscription.txChainGenesisAddresses.map(
                         txChainGenesisAddress => this._txChainChannel(txChainGenesisAddress),
@@ -211,13 +206,13 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                     for (const channel of channels) {
                         socket.leave(channel)
                     }
-                    console.log(`${socket.id} unsubscribed to TxChains ${txChainSubscription.txChainGenesisAddresses}\n\tChannels left : ${channels}`);
+                    console.log(`[Websocket] ${socket.id} unsubscribed to TxChains ${txChainSubscription.txChainGenesisAddresses}`);
                 } catch (e) {
-                    console.log('Unsubscription failed', e)
+                    console.log('[Websocket] Unsubscription failed', e)
                 }
             });
 
-            console.log("Set up done ");
+            console.log("[Websocket] New connection ready");
         });
 
     }
@@ -231,7 +226,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
     }
 
     async emitTxSentEvent(txSentEvent: TxSentEvent) {
-        console.log(`Emit TxSent event : ${txSentEvent.txAddress}`)
+        console.log(`[Websocket] Emit TxSent event : ${txSentEvent.txAddress}`)
         this._socketIo.to(this._txChainChannel(txSentEvent.txChainGenesisAddress)).emit(PubSubEvent.txSent, txSentEvent)
     }
 }

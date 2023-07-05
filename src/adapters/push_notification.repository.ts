@@ -20,7 +20,6 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
         });
     }
 
-
     async init() {
         initializeApp()
         this._client.on('error', err => console.log('Redis Client Error', err));
@@ -96,7 +95,7 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
     ): Promise<void> {
         const subscribedTokens = await this.getSubscribedTokens(txSentEvent.txChainGenesisAddress);
         if (subscribedTokens.length == 0) return;
-        console.log(`Members to notify : ${subscribedTokens}`)
+        console.log(`[PUSH] Members to notify : ${subscribedTokens}`)
 
 
         const availableLocales = Array.from(txSentEvent.pushNotification.keys())
@@ -114,12 +113,12 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
             )
 
             for (const invalidTokens of sendResult.invalidTokens) {
-                console.log(`Removing invalid Push token : ${invalidTokens}`)
+                console.log(`[PUSH] Removing invalid Push token : ${invalidTokens}`)
                 await this.unsubscribeToken(txSentEvent.txChainGenesisAddress, invalidTokens)
                 await this.removeSettings(invalidTokens)
             }
 
-            console.log(`${sendResult.successTokens.length} push notifications successfully sent with locale ${locale}`)
+            console.log(`[PUSH] ${sendResult.successTokens.length} push notifications successfully sent with locale ${locale}`)
 
         }
     }
