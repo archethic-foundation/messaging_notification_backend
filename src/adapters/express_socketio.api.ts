@@ -57,6 +57,7 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
                         payloadSignature: req.body.payloadSignature,
                         pushNotification: new Map(Object.entries(req.body.pushNotification)),
                         type: req.body.type,
+                        extra: req.body.extra
                     }
 
                     console.log(`⚡️ Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
