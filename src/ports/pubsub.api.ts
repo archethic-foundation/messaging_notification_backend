@@ -8,6 +8,8 @@ export type TxSentEvent = {
     txAddress: string
     payloadSignature: string
     pushNotification: Map<string, PushNotification>
+    type: string
+    extra: any
 }
 
 export type TxChainWebsocketSubscription = {
