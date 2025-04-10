@@ -1,4 +1,4 @@
-import { Crypto } from "archethic";
+import { Crypto } from "@archethicjs/sdk";
 import { Deps } from "../deps.js";
 import { Transaction } from "../ports/blockchain.repository.js";
 import { TxSentEvent } from "../ports/pubsub.api.js";

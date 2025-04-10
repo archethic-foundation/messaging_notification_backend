@@ -1,4 +1,4 @@
-import Archethic from "archethic";
+import Archethic from "@archethicjs/sdk";
 import { SocketIoPubSubApi } from "./adapters/express_socketio.api.js";
 import { LibjsBlockchainRepository } from "./adapters/libjs.blockchain.repository.js";
 import { RedisPushNotificationRepository } from "./adapters/push_notification.repository.js";

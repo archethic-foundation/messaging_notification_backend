@@ -1,4 +1,4 @@
-import Archethic from "archethic";
+import Archethic from "@archethicjs/sdk";
 import { BlockchainRepository, Transaction } from "../ports/blockchain.repository.js";
 
 export class LibjsBlockchainRepository implements BlockchainRepository {
