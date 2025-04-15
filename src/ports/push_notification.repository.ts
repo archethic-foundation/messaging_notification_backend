@@ -1,5 +1,5 @@
 import { PushNotificationSettings } from "./http.api.js";
-import { TxSentEvent } from "./pubsub.api.js";
+import { MessagingNotification } from "./pubsub.api.js";
 
 export interface PushNotificationRepository {
     init(): Promise<void>;
@@ -24,12 +24,12 @@ export interface PushNotificationRepository {
         txChainAddress: string,
     ): Promise<Array<string>>;
 
-    emitTxSentEvent(txSentEvent: TxSentEvent): Promise<void>;
+    emitNotification(notification: MessagingNotification): Promise<void>;
 
     sentNotificationExists(txAddress: string): Promise<boolean>;
 
     registerSentNotification(
-        event: TxSentEvent,
+        txAddress: string,
         expirationDate: Date,
     ): Promise<void>;
 }

@@ -3,13 +3,22 @@ export type PushNotification = {
     body: string
 }
 
-export type TxSentEvent = {
-    txChainGenesisAddress: string
+export type MessagingNotification = {
+    smartContractGenesisAddress: string
+    txAddress: string
+    pushNotification: Map<string, PushNotification> // TODO this should be set by the backend itself.
+}
+
+
+export type ChatCreatedEvent = {
+    smartContractGenesisAddress: string
+    payloadSignature: string
+}
+
+export type MessageSentEvent = {
+    smartContractGenesisAddress: string
     txAddress: string
     payloadSignature: string
-    pushNotification: Map<string, PushNotification>
-    type: string
-    extra: any
 }
 
 export type TxChainWebsocketSubscription = {
@@ -19,5 +28,5 @@ export type TxChainWebsocketSubscription = {
 export interface PubSubApi {
     start(): Promise<void>
 
-    emitTxSentEvent(txSentEvent: TxSentEvent): Promise<void>;
+    emitNotification(notification: MessagingNotification): Promise<void>;
 }
