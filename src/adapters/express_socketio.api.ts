@@ -4,10 +4,12 @@ import * as http from "http";
 import { PushNotificationRepository } from "ports/push_notification.repository.js";
 import { createClient } from "redis";
 import * as socketio from "socket.io";
+import { ChatCreated } from "usecase/chat_created.usecase.js";
+import { AlreadySentNotificationError, InvalidNotificationDelayError, InvalidNotificationSignatureError, UnknownTransactionError } from "usecase/guard/errors.js";
+import { MessageSent } from "usecase/message_sent.usecase.js";
 import { RedisConf, RedisConfUtils } from '../configuration.js';
 import { HttpApi, PushNotificationSettings, TxChainPushSubscription, TxChainPushUnsubscription } from "../ports/http.api.js";
-import { PubSubApi, TxChainWebsocketSubscription, TxSentEvent } from "../ports/pubsub.api.js";
-import { AlreadySentNotificationError, InvalidNotificationDelayError, InvalidNotificationSignatureError, TransactionSent, UnknownTransactionError } from "../usecase/transaction_sent.usecase.js";
+import { ChatCreatedEvent, MessageSentEvent, MessagingNotification, PubSubApi, TxChainWebsocketSubscription } from "../ports/pubsub.api.js";
 
 
 export enum PubSubEvent {
@@ -48,21 +50,40 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
         })
 
         this._app.post(
-            '/transactionSent',
+            '/chatCreated',
             async (req: Request, res: Response) => {
                 try {
-                    const txSentEvent: TxSentEvent = {
-                        txChainGenesisAddress: req.body.txChainGenesisAddress,
+                    const chatCreatedEvent: ChatCreatedEvent = {
+                        smartContractGenesisAddress: req.body.contractTxAddress,
+                        payloadSignature: req.body.payloadSignature
+                    }
+                    console.log(`⚡️ Chat ${chatCreatedEvent.smartContractGenesisAddress} created.`)
+
+
+                    await new ChatCreated().run(chatCreatedEvent)
+
+                    res.status(200).send()
+
+
+                } catch (e) {
+
+                }
+            }
+        )
+
+        this._app.post(
+            '/messageSent',
+            async (req: Request, res: Response) => {
+                try {
+                    const messageSentEvent: MessageSentEvent = {
+                        smartContractGenesisAddress: req.body.smartContractGenesisAddress,
                         txAddress: req.body.txAddress,
                         payloadSignature: req.body.payloadSignature,
-                        pushNotification: new Map(Object.entries(req.body.pushNotification)),
-                        type: req.body.type,
-                        extra: req.body.extra
                     }
 
-                    console.log(`⚡️ Transaction ${txSentEvent.txAddress} sent on chain ${txSentEvent.txChainGenesisAddress} event.`)
+                    console.log(`⚡️ Transaction ${messageSentEvent.txAddress} sent on chain ${messageSentEvent.smartContractGenesisAddress} event.`)
 
-                    await new TransactionSent().run(txSentEvent)
+                    await new MessageSent().run(messageSentEvent)
 
                     res.status(200).send()
 
@@ -237,9 +258,9 @@ export class SocketIoPubSubApi implements PubSubApi, HttpApi {
         });
     }
 
-    async emitTxSentEvent(txSentEvent: TxSentEvent) {
-        console.log(`[Websocket] Emit TxSent event : ${txSentEvent.txAddress}`)
-        this._socketIo.to(this._txChainChannel(txSentEvent.txChainGenesisAddress)).emit(PubSubEvent.txSent, txSentEvent)
+    async emitNotification(notification: MessagingNotification) {
+        console.log(`[Websocket] Emit Notification : {genesis: ${notification.smartContractGenesisAddress}, txAddress: ${notification.txAddress}}`)
+        this._socketIo.to(this._txChainChannel(notification.smartContractGenesisAddress)).emit(PubSubEvent.txSent, Notification)
     }
 }
 

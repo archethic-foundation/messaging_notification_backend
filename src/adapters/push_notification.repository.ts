@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { PushNotificationSettings } from 'ports/http.api.js';
-import { PushNotification, TxSentEvent } from 'ports/pubsub.api.js';
+import { MessagingNotification, PushNotification } from 'ports/pubsub.api.js';
 import { RedisClientType, createClient } from 'redis';
 import { RedisConf } from '../configuration.js';
 import { PushNotificationRepository } from '../ports/push_notification.repository.js';
@@ -90,15 +90,15 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
         return this._client.SMEMBERS(this._chainSubscribedPushTokensKey(txChainAddress))
     }
 
-    async emitTxSentEvent(
-        txSentEvent: TxSentEvent,
+    async emitNotification(
+        notification: MessagingNotification,
     ): Promise<void> {
-        const subscribedTokens = await this.getSubscribedTokens(txSentEvent.txChainGenesisAddress);
+        const subscribedTokens = await this.getSubscribedTokens(notification.smartContractGenesisAddress);
         if (subscribedTokens.length == 0) return;
         console.log(`[PUSH] Members to notify : ${subscribedTokens}`)
 
 
-        const availableLocales = Array.from(txSentEvent.pushNotification.keys())
+        const availableLocales = Array.from<string>(notification.pushNotification.keys())
         if (availableLocales.length == 0) return;
 
         const tokensGroupedByLocale = await this._groupTokensByLocale(
@@ -109,12 +109,12 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
         for (const [locale, tokens] of tokensGroupedByLocale.entries()) {
             const sendResult = await this._sendNotifications(
                 tokens,
-                txSentEvent.pushNotification.get(locale),
+                notification.pushNotification.get(locale),
             )
 
             for (const invalidTokens of sendResult.invalidTokens) {
                 console.log(`[PUSH] Removing invalid Push token : ${invalidTokens}`)
-                await this.unsubscribeToken(txSentEvent.txChainGenesisAddress, invalidTokens)
+                await this.unsubscribeToken(notification.smartContractGenesisAddress, invalidTokens)
                 await this.removeSettings(invalidTokens)
             }
 
@@ -194,8 +194,8 @@ export class RedisPushNotificationRepository implements PushNotificationReposito
         return isSent === '1';
     }
 
-    async registerSentNotification(event: TxSentEvent, expirationDate: Date): Promise<void> {
-        await this._client.SET(this._sentNotificationKey(event.txAddress), '1')
-        await this._client.EXPIREAT(this._sentNotificationKey(event.txAddress), expirationDate)
+    async registerSentNotification(txAddress: string, expirationDate: Date): Promise<void> {
+        await this._client.SET(this._sentNotificationKey(txAddress), '1')
+        await this._client.EXPIREAT(this._sentNotificationKey(txAddress), expirationDate)
     }
 }
