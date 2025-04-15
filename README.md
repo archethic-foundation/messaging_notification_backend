@@ -13,14 +13,23 @@ docker-compose up --build --scale push_server=3
 
 ### Production
 
+#### Install systemd service
+
 ```sh
-docker-compose -f docker-compose.yaml up --build --scale push_server=3
+cp archethic-messaging-notification.service /etc/systemd/system
+systemctl daemon-reload
 ```
 
-> Replace `3` by the the number of `push_server` instances you want
+#### Using service
+
+```sh
+systemctl start archethic-messaging-notification
+systemctl stop archethic-messaging-notification
+
+journalctl -u archethic-messaging-notification -f
+```
+
 ## Use cases
-
-
 ### Notification publication
 <details>
 

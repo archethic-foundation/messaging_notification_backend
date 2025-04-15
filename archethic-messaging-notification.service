@@ -1,0 +1,15 @@
+[Unit]
+Description=Archethic Messaging Notification Backend
+After=docker.service
+Requires=docker.service
+
+[Service]
+User=backend
+Restart=always
+ExecStartPre=-/usr/bin/docker-compose -f /home/backend/messaging_notification_backend/docker-compose.mainnet.yaml down
+ExecStart=/usr/bin/docker-compose -f /home/backend/messaging_notification_backend/docker-compose.mainnet.yaml up
+ExecStop=/usr/bin/docker-compose -f /home/backend/messaging_notification_backend/docker-compose.mainnet.yaml down
+WorkingDirectory=/home/backend/messaging_notification_backend
+
+[Install]
+WantedBy=multi-user.target
